@@ -42,7 +42,7 @@ void setPinout() {
   pinMode(zPositivePin , INPUT_PULLUP);
   pinMode(zNegativePin , INPUT_PULLUP);
 }
-void makeStep(int pin, int pin_dir, const int dir, int steps) {
+void makeMove(int pin, int pin_dir, const int dir, int steps) {
   digitalWrite(pin_dir, dir);
   for (int s = 0; s < steps; s++) {
     for (int i = 0; i < 10; i++) {
@@ -56,23 +56,26 @@ void makeStep(int pin, int pin_dir, const int dir, int steps) {
 void control(char ctrl, int steps) {
   switch (ctrl) {
     case 'w':
-      makeStep(3, 6, HIGH, steps);
+      makeMove(3, 6, HIGH, steps);
       break;
     case 's':
-      makeStep(3, 6, LOW, steps);
+      makeMove(3, 6, LOW, steps);
       break;
     case 'a':
-      makeStep(2, 5, HIGH, steps);
+      makeMove(2, 5, HIGH, steps);
       break;
     case 'd':
-      makeStep(2, 5, LOW, steps);
+      makeMove(2, 5, LOW, steps);
       break;
     case 'y':
-      makeStep(4, 7, HIGH, steps);
+      makeMove(4, 7, HIGH, steps);
       break;
     case 'h':
-      makeStep(4, 7, LOW, steps);
+      makeMove(4, 7, LOW, steps);
       break;
+    case 'm':
+        sizeMeasure();
+        break;
     case 'o':
       if (!on) {
         digitalWrite(12, LOW);
@@ -141,14 +144,53 @@ void limitSwitches() {
     bitWrite(endSwitchesState,zNegativeBit,LOW);
   }
 }
- /* 
-  */
-// the setup function runs once when you press reset or power the board
+
+void sizeMeasure() {
+    bool start = false;
+    bool end = false;
+    int x = 0,y=0;
+    do {
+        if (!start) {
+            if (0 == bitRead(endSwitchesState, xNegativeBit)) {
+                makeMove(2, 5, HIGH, 1);
+            }
+            else
+            if (0 == bitRead(endSwitchesState, yNegativeBit)) {
+                makeMove(3, 6, LOW, 1);
+            }
+            else
+                start = !start;
+            limitSwitches();
+            Serial.println("x limit-: " + String(bitRead(endSwitchesState, xNegativeBit)) + "  y limit-:" + String(bitRead(endSwitchesState, yNegativeBit)));
+        }
+        else {
+            if (!end) {
+                if (0 == bitRead(endSwitchesState, xPositiveBit)) {
+                    makeMove(2, 5, LOW, 1);
+                    x++;
+                }else
+                if (0 == bitRead(endSwitchesState, yPositiveBit)) {
+                    makeMove(3, 6, HIGH, 1);
+                    y++;
+                }
+                else
+                    end = !end;
+                limitSwitches();
+                Serial.println("x limit+: " + String(bitRead(endSwitchesState, xPositiveBit)) + "  y limit+:" + String(bitRead(endSwitchesState, yPositiveBit)));
+            }
+
+        }
+        
+
+    } while (!end);
+    Serial.println("x: " + String(x) + "   y:" + String(y));
+}
+
 void setup() {
   Serial.begin(115200);
   setPinout();
 }
-// the loop function runs over and over again until power down or reset
+
 void loop() {
   if (Serial.available()) {
     s = Serial.readString();
