@@ -1,0 +1,9 @@
+{
+    "configuration": "cpu=atmega2560",
+    "board": "arduino:avr:mega",
+    "port": "COM3",
+    "sketch": "Arduino_CNC_Laser_Controller\\Arduino_CNC_Laser_Controller.ino",
+    "output": "../build",
+    "debugger": "jlink",
+    "intelliSenseGen": "global"
+}

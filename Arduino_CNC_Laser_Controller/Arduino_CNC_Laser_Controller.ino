@@ -3,6 +3,7 @@
  Created:	17.03.2021 22:24:43
  Author:	Dominik
 */
+#include <Arduino.h>
 
 bool on = false;
 bool cool = false;
@@ -42,36 +43,41 @@ void setPinout() {
   pinMode(zPositivePin , INPUT_PULLUP);
   pinMode(zNegativePin , INPUT_PULLUP);
 }
-void makeMove(int pin, int pin_dir, const int dir, int steps) {
+void makeMove(int pin, int pin_dir, const int dir, int steps,byte endSwitchBit=0x00) {
   digitalWrite(pin_dir, dir);
   for (int s = 0; s < steps; s++) {
     for (int i = 0; i < 10; i++) {
+      if(endSwitchesState & endSwitchBit){
+        Serial.println("End switch detect value"+ String(endSwitchesState&endSwitchBit));
+      break;
+      }
       digitalWrite(pin, HIGH);
       delayMicroseconds(500);
       digitalWrite(pin, LOW);
       delayMicroseconds(500);
+      limitSwitches();
     }
   }
 }
 void control(char ctrl, int steps) {
   switch (ctrl) {
     case 'w':
-      makeMove(3, 6, HIGH, steps);
+      makeMove(3, 6, HIGH, steps,yPositiveBit);
       break;
     case 's':
-      makeMove(3, 6, LOW, steps);
+      makeMove(3, 6, LOW, steps,yNegativeBit);
       break;
     case 'a':
-      makeMove(2, 5, HIGH, steps);
+      makeMove(2, 5, HIGH, steps,xNegativeBit);
       break;
     case 'd':
-      makeMove(2, 5, LOW, steps);
+      makeMove(2, 5, LOW, steps,xPositiveBit);
       break;
     case 'y':
-      makeMove(4, 7, HIGH, steps);
+      makeMove(4, 7, HIGH, steps,zPositiveBit);
       break;
     case 'h':
-      makeMove(4, 7, LOW, steps);
+      makeMove(4, 7, LOW, steps,zNegativeBit);
       break;
     case 'm':
         sizeMeasure();
@@ -161,7 +167,6 @@ void sizeMeasure() {
             else
                 start = !start;
             limitSwitches();
-            Serial.println("x limit-: " + String(bitRead(endSwitchesState, xNegativeBit)) + "  y limit-:" + String(bitRead(endSwitchesState, yNegativeBit)));
         }
         else {
             if (!end) {
@@ -176,7 +181,6 @@ void sizeMeasure() {
                 else
                     end = !end;
                 limitSwitches();
-                Serial.println("x limit+: " + String(bitRead(endSwitchesState, xPositiveBit)) + "  y limit+:" + String(bitRead(endSwitchesState, yPositiveBit)));
             }
 
         }
@@ -199,8 +203,5 @@ void loop() {
     Serial.println(s);
     Serial.flush();
     s="";
-    Serial.println(endSwitchesState);
-    Serial.flush();
   }
-  limitSwitches();
 }
