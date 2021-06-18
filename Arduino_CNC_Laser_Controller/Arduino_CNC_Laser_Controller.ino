@@ -51,7 +51,7 @@ void makeMove(int pin, int pin_dir, const int dir, int steps,byte endSwitchBit=7
         Serial.println("End switch detect value"+ String(bitRead(endSwitchesState, endSwitchBit)));
         Serial.flush();
         s=steps;
-      break;
+        break;
       }
       digitalWrite(pin, HIGH);
       delayMicroseconds(timeWait);
@@ -87,8 +87,8 @@ void millisMakeMove(int pin, int pin_dir, const int dir, int steps,byte endSwitc
   for (int s = 0; s < steps; s++) {
     for (int i = 0; i < 10; i++) {
       if((1 == bitRead(endSwitchesState, endSwitchBit))&&(endSwitchBit!=7)){
-        Serial.println("End switch detect value"+ String(bitRead(endSwitchesState, endSwitchBit)));
-        Serial.flush();
+        //Serial.println("End switch detect value"+ String(bitRead(endSwitchesState, endSwitchBit)));
+        //Serial.flush();
         s=steps;
       break;
       }
@@ -198,11 +198,11 @@ void sizeMeasure() {
     do {
             if (!end) {
                 if (0 == bitRead(endSwitchesState, xPositiveBit)) {
-                    makeMove(2, 5, LOW, 1);
+                    makeMove(2, 5, LOW, 1,xPositiveBit);
                     x++;
                 }else
                 if (0 == bitRead(endSwitchesState, yPositiveBit)) {
-                    makeMove(3, 6, HIGH, 1);
+                    makeMove(3, 6, HIGH,1,yPositiveBit);
                     y++;
                 }
                 else
@@ -213,19 +213,22 @@ void sizeMeasure() {
 }
 void goToZeroZero(){
   bool start = false;
-  if(on)
+  if(on){
   control('o');
+  on=!on;
+  }
     do{
             if (0 == bitRead(endSwitchesState, xNegativeBit)) {
-                makeMove(2, 5, HIGH, 1);
+                makeMove(2, 5, HIGH, 1,xNegativeBit);
             }
             else
             if (0 == bitRead(endSwitchesState, yNegativeBit)) {
-                makeMove(3, 6, LOW, 1);
+                makeMove(3, 6, LOW, 1,yNegativeBit);
             }
             else
                 start = !start; 
     }while(!start);
+    Serial.println("(0, 0) position set!");
 }
 
 void printSqare() {
@@ -292,10 +295,20 @@ void setup() {
 void loop() {
   if (Serial.available()) {
     s = Serial.readString();
-    numOfSteps = s.charAt(1) - '0';
-    control(s.charAt(0), numOfSteps);
-    Serial.println(s);
-    Serial.flush();
+    serialComandRead(s);
     s="";
   }
+}
+void serialComandRead(String comand){
+  int comandSize = comand.length();
+  numOfSteps=0;
+  int multiplier=1;
+  if(comandSize>4){
+  for(int i=comandSize-4;i>0;i--){
+    numOfSteps+=(comand.charAt(i)-'0')*multiplier;
+    multiplier*=10;
+  }
+  }
+  control(comand.charAt(0), numOfSteps);
+  Serial.println(comand.charAt(0)+String(numOfSteps));
 }
